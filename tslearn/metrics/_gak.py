@@ -256,8 +256,17 @@ def unnormalized_gak(s1, s2, sigma=1.0, be=None):
 
 
 def _log_gram_matrix(s1, s2, sigma, backend):
-    log_gram = -backend.cdist(s1, s2, "sqeuclidean") / (2 * sigma * sigma)
-    log_gram -= backend.log(2 - backend.exp(log_gram))
+    log_gram = backend.cdist(s1, s2, "sqeuclidean")
+    if backend.is_numpy:
+        numpy.negative(log_gram, out=log_gram)
+        log_gram = log_gram / (2 * sigma * sigma)
+        correction = numpy.exp(log_gram)
+        numpy.subtract(2, correction, out=correction)
+        numpy.log(correction, out=correction)
+        log_gram -= correction
+    else:
+        log_gram = -log_gram / (2 * sigma * sigma)
+        log_gram -= backend.log(2 - backend.exp(log_gram))
     return log_gram
 
 
